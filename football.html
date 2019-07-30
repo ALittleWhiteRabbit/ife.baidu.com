@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>第五十四天到第五十七天：足球小将（一）</title>
+	</head>
+	<style>
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		body{
+			width: 100%;
+			height: 100vh;
+		}
+		.map{
+			width: 100%;
+			height: 100%;
+			margin: 0 auto;
+			background-color: green;
+		}
+		.person{
+			position: fixed;
+			top: 0;
+			left: 0;
+		}
+	</style>
+	<body>
+		<div class="map">
+			<canvas id="map"></canvas>
+			<canvas id="person" class="person"></canvas>
+		</div>
+		<script type="text/javascript">
+			(function(){
+				let offsetW = document.body.offsetWidth
+				let offsetH = document.body.offsetHeight
+				let map = document.querySelector("#map")
+				let ctx = map.getContext("2d")
+				let origin = {
+					x: Math.floor(offsetW / 32) ,
+					y: Math.floor(offsetH / 16)
+				}
+				let person = document.querySelector("#person")
+				var ctxp = person.getContext("2d")
+				ctxp.canvas.width = offsetW
+				ctxp.canvas.height = offsetH
+				let minX = origin.x
+				let minY = origin.y
+				
+				let maxX = offsetW- origin.x * 2
+				let maxY = offsetH - origin.y * 2
+				let t = 0
+				let px = 10//像素单位
+				let plists = new Array() //运动员集合
+				let timer
+				var Color =[
+					"#99cccc","##009688","#FFCCCC","#AA99CC","#FF9999","#FFAA66","#FF6666","#FFFF00","#99CCFF"
+				];
+				/*足球场类*/
+				function classMap(width=offsetW,height=offsetH){
+					this.width = width
+					this.height = height
+					
+				}
+				//初始化球场
+				classMap.prototype.init = function(){
+					ctx.canvas.width = this.width
+					ctx.canvas.height = this.height
+					let w = ctx.canvas.width
+					let h = ctx.canvas.height
+					let x = origin.x
+					let y = origin.y
+					ctx.moveTo(x,y)
+					ctx.strokeStyle = "#fff";
+					ctx.fillStyle = "#fff";
+					ctx.lineWidth = 5;
+					ctx.lineTo(w-x,y);
+					ctx.lineTo(w-x,h-y);
+					ctx.lineTo(x,h-y);
+					ctx.lineTo(x,y);
+					ctx.stroke()
+					/*中心线*/
+					ctx.beginPath()
+					ctx.moveTo(w/2 - x,y)
+					ctx.lineTo(w/2 - x,h-y)
+					ctx.stroke()
+					/*画中心园*/
+					ctx.beginPath()
+					ctx.arc(w/2 - x,h/2,x*2,0,2*Math.PI)
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(w/2 - x,h/2,x/5,0,2*Math.PI)
+					ctx.fill()
+					ctx.stroke()
+					/*四个边角*/
+					ctx.beginPath()
+					ctx.arc(x,y,x/2.5,0,0.5* Math.PI)
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(w-x,y,x/2.5, 0.5*Math.PI,Math.PI)
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(x,h-y,x/2.5, 1.5 * Math.PI,2* Math.PI)
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(w-x,h-y,20, 1*Math.PI,1.5*Math.PI)
+					ctx.stroke()
+					/*画禁区*/
+					ctx.beginPath()
+					ctx.moveTo(x,3*x)
+					ctx.lineTo(5*x,3*x)
+					ctx.lineTo(5*x,12*y)
+					ctx.lineTo(x,12*y)
+					ctx.moveTo(x,5*y)
+					ctx.lineTo(3*x,5*y)
+					ctx.lineTo(3*x,10*y)
+					ctx.lineTo(x,10*y)
+					ctx.stroke()
+					/*第二个禁区*/
+					ctx.moveTo(x,4*y)
+					ctx.fillRect(x-x/5,6.5*y,x/5,y*2)
+					ctx.stroke()
+					ctx.moveTo(w-x,y*3)
+					ctx.lineTo(w-5*x,y*3)
+					ctx.lineTo(w-5*x,y*12)
+					ctx.lineTo(w-x,y*12)
+					ctx.moveTo(w-x,y*5)
+					ctx.lineTo(w-3*x,y*5)
+					ctx.lineTo(w-3*x,y*10)
+					ctx.lineTo(w-x,y*10)
+					ctx.stroke()
+					ctx.moveTo(w-x,y*4)
+					ctx.fillRect(w-x,6.5*y,x/5,y*2)
+					ctx.stroke()
+					/*画两个禁区半圆*/
+					ctx.beginPath()
+					ctx.arc(5*x,7.5*y,2.5*x,0.5*Math.PI ,1.5 * Math.PI,true)
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(w-5*x,7.5*y,2.5*x,0.5*Math.PI ,1.5 * Math.PI)
+					ctx.stroke()
+					/*画禁区内小圆*/
+					ctx.beginPath()
+					ctx.arc(4*x,7.5*y,5,0,2* Math.PI)
+					ctx.fill()
+					ctx.stroke()
+					ctx.beginPath()
+					ctx.arc(w-4*x,7.5*y,5,0,2* Math.PI)
+					ctx.fill()
+					ctx.closePath()
+					ctx.stroke()
+				}
+				/*运动员*/
+				function classPerson(){
+					
+				}
+				/*初始化运动员*/
+				classPerson.prototype.init = function(speed = getRandom(1,99),power = 10,){
+					this.speed = speed
+					this.power = getRandom(1,99)
+					this.strength =getRandom(1,99)
+					this.maxSpeed =  Math.floor(3 + (this.speed - 1) * ( 9 / 98 ))
+					this.maxSpeedS = 4 + (this.power - 1) * (-3 / 98)
+					this.lasting =  10 + (this.strength -1) * (5 / 98)
+					this.x = getRandom(minX,maxX)
+					this.y = getRandom(minY,maxY)
+					this.v0 = 0 //加速度
+					this.vx = 0 //偏移量
+					this.color = Color[Math.floor(getRandom(0,6))];
+				}
+				/*运动员跑方法*/
+				
+				classPerson.prototype.run = function(){
+					 //初始速度
+					
+					this.maxSpeedS --
+					this.lasting --
+					if(this.v0 > this.maxSpeed){//达到最高速度后减速
+						this.v0 = this.maxSpeed
+						//t-=0.05
+						this.v0 -= 1
+					}else{
+						this.v0 += 1
+					}
+					if(this.maxSpeedS == 0){//当达到最高速度需要的时间为0时,当前速度为最高速度
+						this.v0 = this.maxSpeed
+					}
+					if(this.lasting == 0){//当最高速度的持续时间为0时,当前速度逐渐减小
+						this.v0--
+					}
+					t+=this.v0 / 100
+					this.x = getCoordinate(this.x,minX,t,this.v0)
+					this.y = getCoordinate(this.y,minY,t,this.v0)
+					console.log('球员'+this.name+'x坐标:'+this.x+'y坐标'+this.y+'实时速度：'+this.v0)
+					if(this.x < minX){
+						this.x = minX
+					}
+					if(this.y < minY){
+						this.y = minY
+					}
+					if(this.x == minX && this.y == minY){
+						clearInterval(timer)
+					}
+					this.draw()
+				}
+				classPerson.prototype.draw =function(){
+					ctxp.beginPath();
+					ctxp.fillStyle=this.color;
+					ctxp.arc(this.x,this.y,10,0,2*Math.PI);
+					ctxp.fill()
+				}
+				function player(){}
+				player.prototype ={
+					creatPerson:function(num){
+						for(var i=0;i<num;i++){
+							var p = new classPerson()
+							p.name = 'p'+i
+							plists.push(p)
+							p.init()
+							p.draw()
+						}
+					},
+					play:function(){
+						timer = setInterval(function(){
+							ctxp.clearRect(0,0,offsetW,offsetH);
+							 for(var item of plists){
+								 item.run()
+							 }
+						},200)
+						console.log(plists)
+					}
+				}
+				function getRandom(min,max){
+					return Math.floor(( Math.random()*(max)+min))
+				}
+				function getCoordinate(start,end,t,v0){
+					return Math.floor((1 - t )  * start + t * end)
+				}
+				function UnitBezier(p1x,p1y,p2x,p2y) {
+						this.cx = 3.0 * p1x;
+						this.bx = 3.0 * (p2x - p1x) - this.cx;
+						this.ax = 1.0 - this.cx -this.bx;    
+						this.cy = 3.0 * p1y;
+						this.by = 3.0 * (p2y - p1y) - this.cy;
+						this.ay = 1.0 - this.cy - this.by;
+				}
+				UnitBezier.prototype = {
+					sampleCurveX : function(t) { //贝赛尔曲线t时刻的坐标点的X坐标
+						return ((this.ax * t + this.bx) * t + this.cx) * t;
+					},
+					sampleCurveY : function(t) {  //贝赛尔曲线t时刻的坐标点的y坐标
+						return ((this.ay * t + this.by) * t + this.cy) * t;
+					},
+					solve:function(t){
+						this.sampleCurveY(this.sampleCurveX(t))
+					 }
+				}
+				window.Map = new classMap()
+				window.player = player
+				
+				
+			})();
+			Map.init()
+			let p1 = new player();
+			p1.creatPerson(3)
+			p1.play()
+		</script>
+	</body>
+</html>
